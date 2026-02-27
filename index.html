@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>COMPASS // CASE FILE</title>
+  <style>
+    :root{
+      --bg:#050508;
+      --panel:#0b0b12cc;
+      --ink:#e9e9f2;
+      --muted:#a9a9c2;
+      --accent:#b08cff;
+      --danger:#ff5d7a;
+      --line:#1e1e2f;
+      --shadow: 0 18px 60px rgba(0,0,0,.75);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background:
+        radial-gradient(1200px 600px at 70% 10%, rgba(176,140,255,.12), transparent 55%),
+        radial-gradient(900px 500px at 20% 80%, rgba(255,93,122,.10), transparent 60%),
+        linear-gradient(180deg, #030307, #070712 70%, #030307);
+      color:var(--ink);
+      font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      overflow-x:hidden;
+    }
+
+    /* Subtle film grain */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      opacity:.35;
+    }
+
+    .wrap{
+      min-height:100%;
+      display:grid;
+      place-items:center;
+      padding:28px 16px;
+    }
+
+    .card{
+      width:min(980px, 100%);
+      background:var(--panel);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      backdrop-filter: blur(10px);
+      position:relative;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:14px 18px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      font-weight:700;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .dot{
+      width:9px;height:9px;border-radius:999px;
+      background: radial-gradient(circle at 30% 30%, #fff, var(--accent));
+      box-shadow:0 0 18px rgba(176,140,255,.5);
+    }
+
+    .controls{
+      display:flex; gap:10px; align-items:center;
+    }
+
+    .btn{
+      appearance:none;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.25);
+      color:var(--ink);
+      padding:9px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition:transform .12s ease, border-color .12s ease, background .12s ease;
+      font-weight:600;
+      font-size:12px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+    .btn:hover{transform:translateY(-1px); border-color:rgba(176,140,255,.35)}
+    .btn:active{transform:translateY(0px)}
+    .btn.danger:hover{border-color:rgba(255,93,122,.45)}
+    .hint{color:var(--muted); font-size:12px}
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap:18px;
+      padding:18px;
+    }
+    @media (max-width: 860px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:var(--radius);
+      padding:16px;
+      background:rgba(0,0,0,.20);
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:18px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+    }
+    .sub{
+      color:var(--muted);
+      margin:0 0 14px;
+      font-size:13px;
+    }
+
+    .note{
+      white-space:pre-wrap;
+      font-size:14px;
+      color:rgba(233,233,242,.92);
+      border-left:3px solid rgba(176,140,255,.45);
+      padding-left:12px;
+      margin-top:10px;
+    }
+
+    .compassWrap{
+      display:grid;
+      place-items:center;
+      padding:10px 0 2px;
+    }
+
+    .compass{
+      width:min(330px, 95%);
+      filter: drop-shadow(0 20px 45px rgba(0,0,0,.75));
+      opacity:.96;
+    }
+
+    .tagRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .tag{
+      font-size:11px;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      background:rgba(0,0,0,.22);
+    }
+
+    .divider{
+      height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,.12), transparent);
+      margin:14px 0;
+    }
+
+    /* Game */
+    .gameTitle{
+      display:flex; justify-content:space-between; align-items:flex-end; gap:12px;
+    }
+    .status{
+      color:var(--muted);
+      font-size:12px;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+    }
+
+    .dpad{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+      place-items:stretch;
+    }
+    .dpad .spacer{visibility:hidden}
+    .choiceBtn{
+      padding:14px 12px;
+      border-radius:16px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition:transform .12s ease, border-color .12s ease, background .12s ease;
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      font-weight:800;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+    }
+    .choiceBtn:hover{
+      transform:translateY(-1px);
+      border-color:rgba(176,140,255,.35);
+      background:rgba(176,140,255,.06);
+    }
+    .choiceBtn:active{transform:translateY(0px)}
+    .choiceBtn small{
+      display:block;
+      margin-top:6px;
+      font-weight:700;
+      letter-spacing:.10em;
+      color:var(--muted);
+      font-size:11px;
+    }
+
+    .result{
+      margin-top:14px;
+      border-radius:var(--radius);
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(0,0,0,.22);
+      padding:14px 14px;
+      min-height:90px;
+    }
+    .result p{margin:0; color:rgba(233,233,242,.92)}
+    .result .muted{color:var(--muted); font-size:12px; margin-top:8px}
+
+    .log{
+      margin-top:12px;
+      max-height:160px;
+      overflow:auto;
+      border-radius:var(--radius);
+      border:1px solid rgba(255,255,255,.06);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+    }
+    .logItem{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size:12px;
+      color:rgba(233,233,242,.86);
+      padding:6px 0;
+      border-bottom:1px dashed rgba(255,255,255,.08);
+    }
+    .logItem:last-child{border-bottom:0}
+    .log .t{color:rgba(176,140,255,.85)}
+    .log .k{color:rgba(255,93,122,.85)}
+
+    /* Password gate */
+    .gate{
+      position:fixed; inset:0;
+      display:grid;
+      place-items:center;
+      background:
+        radial-gradient(1200px 600px at 50% 40%, rgba(176,140,255,.12), transparent 55%),
+        linear-gradient(180deg, #020205, #060611 70%, #020205);
+      z-index:50;
+    }
+    .gateBox{
+      width:min(520px, 92%);
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.30);
+      box-shadow:var(--shadow);
+      padding:18px;
+      backdrop-filter: blur(10px);
+    }
+    .gateHead{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      margin-bottom:12px;
+    }
+    .gateHead h2{
+      margin:0;
+      font-size:14px;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
+    .gateHead .sig{
+      font-weight:800;
+      letter-spacing:.18em;
+      color:rgba(176,140,255,.9);
+      font-size:12px;
+    }
+    .gateMsg{
+      color:rgba(233,233,242,.86);
+      margin:8px 0 14px;
+      font-size:13px;
+    }
+    .row{
+      display:flex; gap:10px; align-items:center;
+    }
+    input[type="password"]{
+      flex:1;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.30);
+      color:var(--ink);
+      outline:none;
+      font-weight:700;
+      letter-spacing:.12em;
+    }
+    input::placeholder{color:rgba(169,169,194,.55); letter-spacing:.10em}
+    .error{
+      margin-top:10px;
+      color:rgba(255,93,122,.92);
+      font-size:12px;
+      min-height:16px;
+    }
+
+    /* Subtle glitch animation */
+    .glitch{
+      position:relative;
+      display:inline-block;
+    }
+    .glitch:before, .glitch:after{
+      content:attr(data-text);
+      position:absolute; left:0; top:0;
+      opacity:.5;
+      clip-path: inset(0 0 0 0);
+      pointer-events:none;
+    }
+    .glitch:before{
+      transform: translate(1px, 0);
+      color: rgba(255,93,122,.8);
+      animation: g1 2.6s infinite linear;
+    }
+    .glitch:after{
+      transform: translate(-1px, 0);
+      color: rgba(176,140,255,.85);
+      animation: g2 3.1s infinite linear;
+    }
+    @keyframes g1{
+      0%{clip-path: inset(0 0 92% 0)}
+      15%{clip-path: inset(40% 0 40% 0)}
+      30%{clip-path: inset(80% 0 5% 0)}
+      45%{clip-path: inset(20% 0 60% 0)}
+      60%{clip-path: inset(55% 0 25% 0)}
+      75%{clip-path: inset(10% 0 70% 0)}
+      100%{clip-path: inset(0 0 92% 0)}
+    }
+    @keyframes g2{
+      0%{clip-path: inset(88% 0 0 0)}
+      20%{clip-path: inset(15% 0 70% 0)}
+      40%{clip-path: inset(65% 0 18% 0)}
+      60%{clip-path: inset(35% 0 48% 0)}
+      80%{clip-path: inset(5% 0 85% 0)}
+      100%{clip-path: inset(88% 0 0 0)}
+    }
+
+    .hidden{display:none!important}
+  </style>
+</head>
+<body>
+  <!-- PASSWORD GATE -->
+  <div id="gate" class="gate" aria-modal="true" role="dialog">
+    <div class="gateBox">
+      <div class="gateHead">
+        <h2><span class="glitch" data-text="RESTRICTED ACCESS">RESTRICTED ACCESS</span></h2>
+        <div class="sig">CASE // N</div>
+      </div>
+      <div class="gateMsg">
+        Enter the password to view the file.
+        <span class="hint">(Audio will start after access.)</span>
+      </div>
+      <div class="row">
+        <input id="pw" type="password" placeholder="PASSWORD" autocomplete="off" inputmode="text" />
+        <button class="btn" id="unlockBtn">Unlock</button>
+      </div>
+      <div class="error" id="err"></div>
+      <div class="hint">Tip: the code was given.</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card hidden" id="content">
+      <div class="topbar">
+        <div class="brand">
+          <span class="dot"></span>
+          <span>COMPASS // EVIDENCE</span>
+        </div>
+        <div class="controls">
+          <button class="btn" id="toggleAudio">Audio: Off</button>
+          <button class="btn danger" id="wipeLog">Wipe Log</button>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- LEFT -->
+        <section class="panel">
+          <h1><span class="glitch" data-text="BROKEN COMPASS">BROKEN COMPASS</span></h1>
+          <p class="sub">A file left behind. Not a confession. Not a warning. A direction that no longer exists.</p>
+
+          <div class="compassWrap" aria-label="Broken compass image">
+            <!-- Inline SVG: broken compass -->
+            <svg class="compass" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Broken compass rose">
+              <defs>
+                <radialGradient id="g" cx="50%" cy="40%" r="70%">
+                  <stop offset="0%" stop-color="#1a1a26"/>
+                  <stop offset="70%" stop-color="#0b0b12"/>
+                  <stop offset="100%" stop-color="#07070d"/>
+                </radialGradient>
+                <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="rgba(233,233,242,.85)"/>
+                  <stop offset="60%" stop-color="rgba(169,169,194,.35)"/>
+                  <stop offset="100%" stop-color="rgba(233,233,242,.12)"/>
+                </linearGradient>
+                <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#000" flood-opacity=".75"/>
+                </filter>
+              </defs>
+
+              <circle cx="320" cy="320" r="280" fill="url(#g)" stroke="url(#ring)" stroke-width="10" filter="url(#shadow)"/>
+              <circle cx="320" cy="320" r="245" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+              <circle cx="320" cy="320" r="215" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="2"/>
+
+              <!-- Rose points -->
+              <g fill="rgba(233,233,242,.85)">
+                <path d="M320 92 L350 300 L320 320 L290 300 Z" opacity=".92"/>
+                <path d="M548 320 L340 350 L320 320 L340 290 Z" opacity=".92"/>
+                <path d="M320 548 L290 340 L320 320 L350 340 Z" opacity=".92"/>
+                <path d="M92 320 L300 290 L320 320 L300 350 Z" opacity=".92"/>
+              </g>
+
+              <!-- Inner diagonals -->
+              <g fill="rgba(176,140,255,.35)">
+                <path d="M455 185 L340 300 L320 320 L300 340 L185 455 L210 480 L320 360 L430 250 Z"/>
+                <path d="M185 185 L210 160 L320 280 L430 160 L455 185 L340 300 L320 320 L300 340 Z"/>
+              </g>
+
+              <!-- Broken cracks (East fractured) -->
+              <g stroke="rgba(255,93,122,.75)" stroke-width="4" stroke-linecap="round">
+                <path d="M430 250 L490 205"/>
+                <path d="M450 270 L520 235"/>
+                <path d="M468 290 L540 260"/>
+              </g>
+
+              <!-- Central cut line -->
+              <g stroke="rgba(233,233,242,.35)" stroke-width="5" stroke-linecap="round">
+                <path d="M165 330 L475 310"/>
+              </g>
+
+              <!-- Two notches near East -->
+              <g stroke="rgba(233,233,242,.6)" stroke-width="6" stroke-linecap="round">
+                <path d="M535 300 L520 285"/>
+                <path d="M535 340 L520 355"/>
+              </g>
+
+              <!-- Letter E only -->
+              <text x="520" y="332" font-size="34" font-family="ui-serif, Georgia, serif" fill="rgba(233,233,242,.85)">E</text>
+
+              <!-- Subtle scratch texture -->
+              <g stroke="rgba(255,255,255,.05)" stroke-width="2" stroke-linecap="round">
+                <path d="M170 250 L260 225"/>
+                <path d="M210 420 L310 400"/>
+                <path d="M360 470 L470 440"/>
+                <path d="M290 150 L380 135"/>
+              </g>
+            </svg>
+          </div>
+
+          <div class="tagRow">
+            <span class="tag">EAST: SURVIVAL</span>
+            <span class="tag">SOUTH: DUTY (DEFACED)</span>
+            <span class="tag">RAILS: POSITION MARKERS</span>
+            <span class="tag">FILE: ACTIVE</span>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="note" id="noteText">
+You found the piece on the tracks. The one I scratched out and threw away. That's the point. Im not looking for direction anymore. I tried. I carved it. I labeled it. Gave you the password, I even handed you East like evidence and told myself duty could hold what I couldnt. It didn't. I scratched it out and dropped it on steel because that's where duty ends up for everyone else. If you're still telling yourselves the difference is permission, then you already understand me. I'm done asking for it. Lets see what the future holds now.  -J
+          </div>
+        </section>
+
+        <!-- RIGHT -->
+        <section class="panel">
+          <div class="gameTitle">
+            <h1 style="margin:0">Where does it go next?</h1>
+            <div class="status" id="status">Awaiting input</div>
+          </div>
+          <p class="sub" style="margin-top:8px">
+            Choose a direction. The file responds. Keep choosing until the pattern shows itself.
+          </p>
+
+          <div class="dpad" role="group" aria-label="Direction chooser">
+            <div class="spacer">.</div>
+            <button class="choiceBtn" data-dir="NORTH">
+              NORTH <small>CHOICE</small>
+            </button>
+            <div class="spacer">.</div>
+
+            <button class="choiceBtn" data-dir="WEST">
+              WEST <small>MURDER</small>
+            </button>
+            <button class="choiceBtn" data-dir="CENTER">
+              CENTER <small>LINE</small>
+            </button>
+            <button class="choiceBtn" data-dir="EAST">
+              EAST <small>SURVIVAL</small>
+            </button>
+
+            <div class="spacer">.</div>
+            <button class="choiceBtn" data-dir="SOUTH">
+              SOUTH <small>DUTY</small>
+            </button>
+            <div class="spacer">.</div>
+          </div>
+
+          <div class="result" aria-live="polite">
+            <p id="resultText">Make a selection.</p>
+            <div class="muted" id="resultHint">Tip: the wrong answers still tell you something.</div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="status" style="margin-bottom:8px">Interaction log</div>
+          <div class="log" id="log"></div>
+
+          <p class="hint" style="margin-top:12px">
+            If audio doesn’t play automatically, toggle it on. Some browsers require a button click.
+          </p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // PASSWORD GATE
+    // =========================
+    const PASSWORD = "N3275";
+    const gate = document.getElementById("gate");
+    const pw = document.getElementById("pw");
+    const err = document.getElementById("err");
+    const unlockBtn = document.getElementById("unlockBtn");
+    const content = document.getElementById("content");
+
+    function unlock(){
+      const v = (pw.value || "").trim();
+      if(v === PASSWORD){
+        gate.classList.add("hidden");
+        content.classList.remove("hidden");
+        err.textContent = "";
+        startAmbience(); // start audio after interaction
+        setStatus("Access granted");
+        logEvent("SYSTEM", "ACCESS GRANTED");
+      } else {
+        err.textContent = "ACCESS DENIED";
+        logEvent("SYSTEM", "ACCESS DENIED");
+        shake(gate);
+      }
+    }
+
+    unlockBtn.addEventListener("click", unlock);
+    pw.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") unlock();
+    });
+
+    function shake(el){
+      el.animate([
+        { transform: "translateX(0)" },
+        { transform: "translateX(-6px)" },
+        { transform: "translateX(6px)" },
+        { transform: "translateX(-4px)" },
+        { transform: "translateX(4px)" },
+        { transform: "translateX(0)" },
+      ], { duration: 280, easing: "ease-out" });
+    }
+
+    // =========================
+    // AUDIO (musical + dramatic)
+    // - Slow minor chord progression (pad + bass)
+    // - Gentle pulse + delay for cinematic creep
+    // =========================
+    let audioOn = false;
+    let ctx = null;
+    let master = null;
+    let nodes = [];
+    let seqTimer = null;
+
+    const toggleAudioBtn = document.getElementById("toggleAudio");
+
+    function startAmbience(){
+      if(audioOn) return;
+      audioOn = true;
+      toggleAudioBtn.textContent = "Audio: On";
+
+      try{
+        if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if(ctx.state === "suspended") ctx.resume();
+
+        // --- Master chain ---
+        master = ctx.createGain();
+        master.gain.value = 0.22; // overall loudness
+
+        // Delay (echo)
+        const delay = ctx.createDelay(1.2);
+        delay.delayTime.value = 0.32;
+
+        const fb = ctx.createGain();
+        fb.gain.value = 0.33;
+
+        // Tone shaping
+        const lp = ctx.createBiquadFilter();
+        lp.type = "lowpass";
+        lp.frequency.value = 1400;
+        lp.Q.value = 0.9;
+
+        // Slight “room” via subtle high-shelf cut (less harsh)
+        const hs = ctx.createBiquadFilter();
+        hs.type = "highshelf";
+        hs.frequency.value = 2800;
+        hs.gain.value = -6;
+
+        // Route: master -> filters -> output
+        master.connect(lp);
+        lp.connect(hs);
+        hs.connect(ctx.destination);
+
+        // Delay send (parallel)
+        const send = ctx.createGain();
+        send.gain.value = 0.22;
+        master.connect(send);
+        send.connect(delay);
+        delay.connect(fb);
+        fb.connect(delay);
+        delay.connect(lp); // return into same output chain
+
+        // --- Helper: create a soft pad voice ---
+        function padVoice(freq){
+          const o1 = ctx.createOscillator();
+          const o2 = ctx.createOscillator();
+          o1.type = "sawtooth";
+          o2.type = "triangle";
+          o1.frequency.value = freq;
+          o2.frequency.value = freq * 1.005; // slight detune
+
+          const vca = ctx.createGain();
+          vca.gain.value = 0;
+
+          // per-voice filter to soften saw
+          const vf = ctx.createBiquadFilter();
+          vf.type = "lowpass";
+          vf.frequency.value = 800;
+          vf.Q.value = 0.7;
+
+          o1.connect(vf);
+          o2.connect(vf);
+          vf.connect(vca);
+          vca.connect(master);
+
+          o1.start();
+          o2.start();
+
+          nodes.push(o1,o2,vca,vf);
+          return { vca, vf, o1, o2 };
+        }
+
+        // --- Helper: create a bass voice ---
+        function bassVoice(freq){
+          const o = ctx.createOscillator();
+          o.type = "sine";
+          o.frequency.value = freq;
+
+          const vca = ctx.createGain();
+          vca.gain.value = 0;
+
+          const vf = ctx.createBiquadFilter();
+          vf.type = "lowpass";
+          vf.frequency.value = 220;
+          vf.Q.value = 0.8;
+
+          o.connect(vf);
+          vf.connect(vca);
+          vca.connect(master);
+
+          o.start();
+          nodes.push(o,vca,vf);
+          return { vca, vf, o };
+        }
+
+        // --- Gentle noise “air” (kept subtle) ---
+        const noise = ctx.createBufferSource();
+        noise.buffer = makeNoiseBuffer(ctx, 2.2);
+        noise.loop = true;
+        const noiseF = ctx.createBiquadFilter();
+        noiseF.type = "bandpass";
+        noiseF.frequency.value = 300;
+        noiseF.Q.value = 0.7;
+        const noiseG = ctx.createGain();
+        noiseG.gain.value = 0.01;
+        noise.connect(noiseF);
+        noiseF.connect(noiseG);
+        noiseG.connect(master);
+        noise.start();
+        nodes.push(noise, noiseF, noiseG);
+
+        // --- Musical progression (minor, cinematic) ---
+        // Key: D minor-ish vibe (you can change root below)
+        const A4 = 440;
+        const mtof = (midi) => A4 * Math.pow(2, (midi - 69) / 12);
+
+        // Chords (root position): Dm -> Bb -> F -> C (dark but “movie”)
+        // Pads are higher, bass follows root
+        const progression = [
+          { name:"Dm", pad:[62, 65, 69], bass:38 }, // D4 F4 A4 / D2
+          { name:"Bb", pad:[70, 74, 77], bass:46 }, // Bb4 D5 F5 / Bb2
+          { name:"F",  pad:[69, 72, 76], bass:41 }, // A4 C5 E5 / F2
+          { name:"C",  pad:[67, 71, 74], bass:36 }, // G4 B4 D5 / C2
+        ];
+
+        // Create pad voices (3-note chord) + bass
+        const pad = [padVoice(220), padVoice(220), padVoice(220)];
+        const bass = bassVoice(110);
+
+        // Pulse (tremolo) for cinematic tension
+        const trem = ctx.createOscillator();
+        trem.type = "sine";
+        trem.frequency.value = 1.25; // slow pulse
+        const tremGain = ctx.createGain();
+        tremGain.gain.value = 0.04; // depth
+        trem.connect(tremGain);
+        // apply tremolo to master gain subtly
+        tremGain.connect(master.gain);
+        trem.start();
+        nodes.push(trem, tremGain);
+
+        // Fade helpers
+        function envOn(g, t, peak, atk=0.9){
+          g.cancelScheduledValues(t);
+          g.setValueAtTime(g.value, t);
+          g.linearRampToValueAtTime(peak, t + atk);
+        }
+        function envOff(g, t, rel=1.2){
+          g.cancelScheduledValues(t);
+          g.setValueAtTime(g.value, t);
+          g.linearRampToValueAtTime(0.0001, t + rel);
+        }
+
+        // Sequencer
+        let step = 0;
+        const chordLen = 6.8; // seconds per chord
+        const padLevel = 0.09;
+        const bassLevel = 0.12;
+
+        function playStep(){
+          const t = ctx.currentTime + 0.02;
+          const ch = progression[step % progression.length];
+
+          // set frequencies
+          pad.forEach((v, i) => {
+            const f = mtof(ch.pad[i]);
+            v.o1.frequency.setValueAtTime(f, t);
+            v.o2.frequency.setValueAtTime(f * 1.005, t);
+            // slightly open filter at chord change
+            v.vf.frequency.setValueAtTime(780, t);
+            v.vf.frequency.linearRampToValueAtTime(680, t + 2.2);
+          });
+
+          bass.o.frequency.setValueAtTime(mtof(ch.bass), t);
+          bass.vf.frequency.setValueAtTime(220, t);
+
+          // envelope: fade in pads + bass, then gently fade before next
+          pad.forEach(v => envOn(v.vca.gain, t, padLevel, 1.1));
+          envOn(bass.vca.gain, t, bassLevel, 0.6);
+
+          // schedule fade-out a bit before next step
+          const offT = t + chordLen - 1.0;
+          pad.forEach(v => envOff(v.vca.gain, offT, 1.0));
+          envOff(bass.vca.gain, offT, 0.8);
+
+          // UI log
+          try { logEvent("AUDIO", `PROG → ${ch.name}`); } catch(_) {}
+
+          step++;
+        }
+
+        // kick once immediately and then loop
+        playStep();
+        seqTimer = setInterval(playStep, chordLen * 1000);
+
+        logEvent("AUDIO", "ON (MUSICAL)");
+      }catch(e){
+        console.warn("Audio failed:", e);
+        try { logEvent("AUDIO", "FAILED"); } catch(_){}
+      }
+    }
+
+    function stopAmbience(){
+      if(!audioOn) return;
+      audioOn = false;
+      toggleAudioBtn.textContent = "Audio: Off";
+
+      if(seqTimer){
+        clearInterval(seqTimer);
+        seqTimer = null;
+      }
+
+      try{
+        if(ctx && master){
+          // fade out master quickly
+          const t = ctx.currentTime;
+          master.gain.cancelScheduledValues(t);
+          master.gain.setValueAtTime(master.gain.value, t);
+          master.gain.linearRampToValueAtTime(0.0001, t + 0.6);
+        }
+
+        // stop oscillators/buffers safely
+        setTimeout(()=>{
+          nodes.forEach(n=>{
+            if(n && typeof n.stop === "function"){
+              try{ n.stop(); }catch(_){}
+            }
+          });
+          nodes = [];
+        }, 650);
+      }catch(_){}
+
+      logEvent("AUDIO", "OFF");
+    }
+
+    // Noise buffer helper
+    function makeNoiseBuffer(audioCtx, seconds){
+      const sampleRate = audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(1, Math.floor(sampleRate * seconds), sampleRate);
+      const data = buffer.getChannelData(0);
+      for(let i=0;i<data.length;i++){
+        const white = Math.random() * 2 - 1;
+        data[i] = (i ? (data[i-1] + (0.02 * white)) : white) * 0.98;
+      }
+      return buffer;
+    }
+
+    toggleAudioBtn.addEventListener("click", ()=>{
+      if(audioOn) stopAmbience();
+      else startAmbience();
+    });
+
+    // =========================
+    // GAME LOGIC
+    // =========================
+    const statusEl = document.getElementById("status");
+    const resultText = document.getElementById("resultText");
+    const resultHint = document.getElementById("resultHint");
+    const logEl = document.getElementById("log");
+    const wipeLogBtn = document.getElementById("wipeLog");
+
+    const state = {
+      picks: [],
+      streak: 0,
+    };
+
+    const responses = {
+      NORTH: [
+        "CHOICE is the first lie we tell ourselves to feel clean.",
+        "If you hesitate, you call it choice. If you commit, you call it duty.",
+        "North is for people who still believe the line exists."
+      ],
+      EAST: [
+        "SURVIVAL makes everything sound necessary. Even the unnecessary.",
+        "East breaks first. It always does.",
+        "You already processed East like evidence. It didn’t hold."
+      ],
+      SOUTH: [
+        "DUTY was scratched out and dropped on steel.",
+        "South is where permission pretends to be morality.",
+        "If duty buries innocents, what is it protecting?"
+      ],
+      WEST: [
+        "MURDER is what you call it when the paperwork isn’t yours.",
+        "West isn’t louder. It’s quieter.",
+        "If the difference is permission… you already know where this goes."
+      ],
+      CENTER: [
+        "The cut through the center isn’t a direction. It’s a conclusion.",
+        "A compass can’t help you once every word means the same thing.",
+        "The line was drawn. Not between right and wrong—between allowed and not."
+      ]
+    };
+
+    function pick(arr){
+      return arr[Math.floor(Math.random()*arr.length)];
+    }
+
+    function setStatus(s){
+      statusEl.textContent = s;
+    }
+
+    function nowStamp(){
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2,"0");
+      const mm = String(d.getMinutes()).padStart(2,"0");
+      const ss = String(d.getSeconds()).padStart(2,"0");
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function logEvent(kind, msg){
+      const div = document.createElement("div");
+      div.className = "logItem";
+      const k = (kind || "LOG").toUpperCase();
+      div.innerHTML = `<span class="t">[${nowStamp()}]</span> <span class="k">${k}</span> // ${escapeHtml(msg)}`;
+      logEl.prepend(div);
+    }
+
+    function escapeHtml(str){
+      return String(str).replace(/[&<>"']/g, s => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[s]));
+    }
+
+    function evaluatePattern(){
+      const seq = state.picks.join(">");
+      if(seq.includes("EAST>SOUTH")){
+        return "Pattern recognized: East → South (evidence → duty) // containment failed.";
+      }
+      if(seq.includes("SOUTH>WEST")){
+        return "Pattern recognized: South → West (duty → murder) // permission collapses.";
+      }
+      if(state.picks.length >= 6){
+        return "The journey loops. That’s the point. You don’t get out by naming it.";
+      }
+      return null;
+    }
+
+    document.querySelectorAll(".choiceBtn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const dir = btn.dataset.dir;
+        state.picks.push(dir);
+
+        const line = pick(responses[dir] || ["..."]);
+        resultText.textContent = line;
+        setStatus(`Selected: ${dir}`);
+
+        logEvent("CHOICE", `${dir} → ${line}`);
+
+        const pattern = evaluatePattern();
+        if(pattern){
+          resultHint.textContent = pattern;
+          logEvent("PATTERN", pattern);
+        }else{
+          resultHint.textContent = "Keep going.";
+        }
+
+        document.body.animate([{opacity:1},{opacity:.985},{opacity:1}], {duration:180});
+      });
+    });
+
+    wipeLogBtn.addEventListener("click", ()=>{
+      logEl.innerHTML = "";
+      logEvent("SYSTEM", "LOG WIPED");
+    });
+
+    document.addEventListener("click", ()=>{
+      if(audioOn && ctx && ctx.state === "suspended") ctx.resume();
+    });
+  </script>
+</body>
+</html>
