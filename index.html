@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>COMPASS // CASE FILE</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Ccircle cx=%228%22 cy=%228%22 r=%227%22 fill=%22%23b08cff%22/%3E%3C/svg%3E">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <style>
     :root{
       --bg:#050508;
@@ -583,8 +587,6 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
 
     // =========================
     // AUDIO (musical + dramatic)
-    // - Slow minor chord progression (pad + bass)
-    // - Gentle pulse + delay for cinematic creep
     // =========================
     let audioOn = false;
     let ctx = null;
@@ -603,56 +605,48 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
         if(!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
         if(ctx.state === "suspended") ctx.resume();
 
-        // --- Master chain ---
         master = ctx.createGain();
-        master.gain.value = 0.22; // overall loudness
+        master.gain.value = 0.22;
 
-        // Delay (echo)
         const delay = ctx.createDelay(1.2);
         delay.delayTime.value = 0.32;
 
         const fb = ctx.createGain();
         fb.gain.value = 0.33;
 
-        // Tone shaping
         const lp = ctx.createBiquadFilter();
         lp.type = "lowpass";
         lp.frequency.value = 1400;
         lp.Q.value = 0.9;
 
-        // Slight “room” via subtle high-shelf cut (less harsh)
         const hs = ctx.createBiquadFilter();
         hs.type = "highshelf";
         hs.frequency.value = 2800;
         hs.gain.value = -6;
 
-        // Route: master -> filters -> output
         master.connect(lp);
         lp.connect(hs);
         hs.connect(ctx.destination);
 
-        // Delay send (parallel)
         const send = ctx.createGain();
         send.gain.value = 0.22;
         master.connect(send);
         send.connect(delay);
         delay.connect(fb);
         fb.connect(delay);
-        delay.connect(lp); // return into same output chain
+        delay.connect(lp);
 
-        // --- Helper: create a soft pad voice ---
         function padVoice(freq){
           const o1 = ctx.createOscillator();
           const o2 = ctx.createOscillator();
           o1.type = "sawtooth";
           o2.type = "triangle";
           o1.frequency.value = freq;
-          o2.frequency.value = freq * 1.005; // slight detune
+          o2.frequency.value = freq * 1.005;
 
           const vca = ctx.createGain();
           vca.gain.value = 0;
 
-          // per-voice filter to soften saw
           const vf = ctx.createBiquadFilter();
           vf.type = "lowpass";
           vf.frequency.value = 800;
@@ -670,7 +664,6 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
           return { vca, vf, o1, o2 };
         }
 
-        // --- Helper: create a bass voice ---
         function bassVoice(freq){
           const o = ctx.createOscillator();
           o.type = "sine";
@@ -693,7 +686,6 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
           return { vca, vf, o };
         }
 
-        // --- Gentle noise “air” (kept subtle) ---
         const noise = ctx.createBufferSource();
         noise.buffer = makeNoiseBuffer(ctx, 2.2);
         noise.loop = true;
@@ -709,37 +701,29 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
         noise.start();
         nodes.push(noise, noiseF, noiseG);
 
-        // --- Musical progression (minor, cinematic) ---
-        // Key: D minor-ish vibe (you can change root below)
         const A4 = 440;
         const mtof = (midi) => A4 * Math.pow(2, (midi - 69) / 12);
 
-        // Chords (root position): Dm -> Bb -> F -> C (dark but “movie”)
-        // Pads are higher, bass follows root
         const progression = [
-          { name:"Dm", pad:[62, 65, 69], bass:38 }, // D4 F4 A4 / D2
-          { name:"Bb", pad:[70, 74, 77], bass:46 }, // Bb4 D5 F5 / Bb2
-          { name:"F",  pad:[69, 72, 76], bass:41 }, // A4 C5 E5 / F2
-          { name:"C",  pad:[67, 71, 74], bass:36 }, // G4 B4 D5 / C2
+          { name:"Dm", pad:[62, 65, 69], bass:38 },
+          { name:"Bb", pad:[70, 74, 77], bass:46 },
+          { name:"F",  pad:[69, 72, 76], bass:41 },
+          { name:"C",  pad:[67, 71, 74], bass:36 },
         ];
 
-        // Create pad voices (3-note chord) + bass
         const pad = [padVoice(220), padVoice(220), padVoice(220)];
         const bass = bassVoice(110);
 
-        // Pulse (tremolo) for cinematic tension
         const trem = ctx.createOscillator();
         trem.type = "sine";
-        trem.frequency.value = 1.25; // slow pulse
+        trem.frequency.value = 1.25;
         const tremGain = ctx.createGain();
-        tremGain.gain.value = 0.04; // depth
+        tremGain.gain.value = 0.04;
         trem.connect(tremGain);
-        // apply tremolo to master gain subtly
         tremGain.connect(master.gain);
         trem.start();
         nodes.push(trem, tremGain);
 
-        // Fade helpers
         function envOn(g, t, peak, atk=0.9){
           g.cancelScheduledValues(t);
           g.setValueAtTime(g.value, t);
@@ -751,9 +735,8 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
           g.linearRampToValueAtTime(0.0001, t + rel);
         }
 
-        // Sequencer
         let step = 0;
-        const chordLen = 6.8; // seconds per chord
+        const chordLen = 6.8;
         const padLevel = 0.09;
         const bassLevel = 0.12;
 
@@ -761,12 +744,10 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
           const t = ctx.currentTime + 0.02;
           const ch = progression[step % progression.length];
 
-          // set frequencies
           pad.forEach((v, i) => {
             const f = mtof(ch.pad[i]);
             v.o1.frequency.setValueAtTime(f, t);
             v.o2.frequency.setValueAtTime(f * 1.005, t);
-            // slightly open filter at chord change
             v.vf.frequency.setValueAtTime(780, t);
             v.vf.frequency.linearRampToValueAtTime(680, t + 2.2);
           });
@@ -774,29 +755,24 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
           bass.o.frequency.setValueAtTime(mtof(ch.bass), t);
           bass.vf.frequency.setValueAtTime(220, t);
 
-          // envelope: fade in pads + bass, then gently fade before next
           pad.forEach(v => envOn(v.vca.gain, t, padLevel, 1.1));
           envOn(bass.vca.gain, t, bassLevel, 0.6);
 
-          // schedule fade-out a bit before next step
           const offT = t + chordLen - 1.0;
           pad.forEach(v => envOff(v.vca.gain, offT, 1.0));
           envOff(bass.vca.gain, offT, 0.8);
 
-          // UI log
           try { logEvent("AUDIO", `PROG → ${ch.name}`); } catch(_) {}
-
           step++;
         }
 
-        // kick once immediately and then loop
         playStep();
         seqTimer = setInterval(playStep, chordLen * 1000);
 
         logEvent("AUDIO", "ON (MUSICAL)");
       }catch(e){
         console.warn("Audio failed:", e);
-        try { logEvent("AUDIO", "FAILED"); } catch(_){}
+        try { logEvent("AUDIO", "FAILED"); } catch(_) {}
       }
     }
 
@@ -812,14 +788,12 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
 
       try{
         if(ctx && master){
-          // fade out master quickly
           const t = ctx.currentTime;
           master.gain.cancelScheduledValues(t);
           master.gain.setValueAtTime(master.gain.value, t);
           master.gain.linearRampToValueAtTime(0.0001, t + 0.6);
         }
 
-        // stop oscillators/buffers safely
         setTimeout(()=>{
           nodes.forEach(n=>{
             if(n && typeof n.stop === "function"){
@@ -833,7 +807,6 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
       logEvent("AUDIO", "OFF");
     }
 
-    // Noise buffer helper
     function makeNoiseBuffer(audioCtx, seconds){
       const sampleRate = audioCtx.sampleRate;
       const buffer = audioCtx.createBuffer(1, Math.floor(sampleRate * seconds), sampleRate);
@@ -851,7 +824,7 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
     });
 
     // =========================
-    // GAME LOGIC
+    // GAME LOGIC + SECRET SEQUENCE
     // =========================
     const statusEl = document.getElementById("status");
     const resultText = document.getElementById("resultText");
@@ -862,7 +835,27 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
     const state = {
       picks: [],
       streak: 0,
+      sequenceIndex: 0,
+      unlocked: false,
     };
+
+    // Master pattern (must be entered in exact order)
+    const SECRET_SEQUENCE = ["EAST", "SOUTH", "WEST", "NORTH", "CENTER"];
+
+    const FINAL_MESSAGE = [
+      "FILE UNSEALED.",
+      "",
+      "You followed it in the only order that mattered.",
+      "Survival → Duty → Murder → Choice → Line.",
+      "",
+      "The compass didn’t break.",
+      "It was never whole.",
+      "",
+      "Next drop: WESTBOUND.",
+      
+      "",
+      "— J"
+    ].join("\n");
 
     const responses = {
       NORTH: [
@@ -922,17 +915,59 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
       }[s]));
     }
 
-    function evaluatePattern(){
-      const seq = state.picks.join(">");
-      if(seq.includes("EAST>SOUTH")){
-        return "Pattern recognized: East → South (evidence → duty) // containment failed.";
+    function resetSequenceProgress(){
+      state.sequenceIndex = 0;
+    }
+
+    function onSequenceWin(){
+      resultText.textContent = "FILE UNSEALED.";
+      resultHint.textContent = "The file has changed.";
+
+      const note = document.getElementById("noteText");
+      if(note){
+        note.textContent = FINAL_MESSAGE;
       }
-      if(seq.includes("SOUTH>WEST")){
-        return "Pattern recognized: South → West (duty → murder) // permission collapses.";
+
+      logEvent("UNLOCK", "FINAL FILE UNSEALED");
+      logEvent("MESSAGE", "Final message injected into note panel");
+
+      document.body.animate(
+        [{ filter:"brightness(1)" }, { filter:"brightness(1.08)" }, { filter:"brightness(1)" }],
+        { duration: 420, easing: "ease-out" }
+      );
+    }
+
+    function evaluatePattern(latestDir){
+      if(state.unlocked){
+        console.log("[PATTERN] already unlocked");
+        return "UNLOCKED // File unsealed.";
       }
-      if(state.picks.length >= 6){
-        return "The journey loops. That’s the point. You don’t get out by naming it.";
+
+      const expected = SECRET_SEQUENCE[state.sequenceIndex];
+      console.log("[PATTERN] click:", latestDir, "| expected:", expected, "| index:", state.sequenceIndex);
+
+      if(latestDir === expected){
+        state.sequenceIndex++;
+        console.log("[PATTERN] progress:", state.sequenceIndex, "/", SECRET_SEQUENCE.length);
+
+        if(state.sequenceIndex === SECRET_SEQUENCE.length){
+          state.unlocked = true;
+          onSequenceWin();
+          console.log("[PATTERN] COMPLETE");
+          return "Pattern complete: ACCESS GRANTED // FINAL FILE UNSEALED.";
+        }
+
+        return `Pattern progress: ${state.sequenceIndex}/${SECRET_SEQUENCE.length}`;
       }
+
+      if(latestDir === SECRET_SEQUENCE[0]){
+        state.sequenceIndex = 1;
+        console.log("[PATTERN] restarted from first step");
+        return `Pattern reset: 1/${SECRET_SEQUENCE.length}`;
+      }
+
+      console.log("[PATTERN] reset to 0");
+      resetSequenceProgress();
       return null;
     }
 
@@ -947,12 +982,14 @@ You found the piece on the tracks. The one I scratched out and threw away. That'
 
         logEvent("CHOICE", `${dir} → ${line}`);
 
-        const pattern = evaluatePattern();
-        if(pattern){
-          resultHint.textContent = pattern;
-          logEvent("PATTERN", pattern);
+        // ✅ Secret sequence check
+        const seqMsg = evaluatePattern(dir);
+        if(seqMsg){
+          resultHint.textContent = seqMsg;
+          logEvent("PATTERN", seqMsg);
         }else{
-          resultHint.textContent = "Keep going.";
+          resultHint.textContent = "Pattern lost. Start again from EAST.";
+          logEvent("PATTERN", "Sequence reset");
         }
 
         document.body.animate([{opacity:1},{opacity:.985},{opacity:1}], {duration:180});
