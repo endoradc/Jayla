@@ -99,6 +99,22 @@ button:hover{background:#2e506f}
 .hint{
   margin-top:18px;padding:14px;border:1px dashed #40556c;color:#91a5b9;font-size:12px
 }
+.update-banner{
+  margin-bottom:22px;padding:14px 16px;border:1px solid #7b683b;
+  background:#18160f;color:#dfca91;font-size:13px;line-height:1.55
+}
+.update-banner strong{color:#f0d99c}
+.security{
+  border-left-color:var(--danger);background:#1b1114
+}
+.security strong{color:#e5aaaa}
+.external-link{
+  display:inline-block;margin-top:12px;padding:10px 14px;
+  border:1px solid #4c7190;background:#183149;color:#e8f3ff;
+  text-decoration:none;font-size:12px;font-weight:700;letter-spacing:.5px
+}
+.external-link:hover{background:#234762}
+.meta-small{font-size:12px;color:var(--muted);line-height:1.55}
 @media(max-width:650px){
   .grid{grid-template-columns:1fr}
   .search{flex-direction:column}
@@ -119,6 +135,12 @@ button:hover{background:#2e506f}
     <strong>LAW ENFORCEMENT / GOVERNMENT SYSTEM.</strong>
     Records reflect information retained by Dock Management, Harbor Control, and vessel declarations.
     Restricted federal movements may contain limited annotations only.
+  </div>
+
+  <div class="update-banner">
+    <strong>AUTOMATED RECORD UPDATE</strong><br>
+    A vessel record previously accessed by a law-enforcement user has received a subsequent movement amendment.
+    <br><strong>MMSI:</strong> 248611920 &nbsp; • &nbsp; <strong>Update Type:</strong> Route / Federal Movement
   </div>
 
   <div class="search">
@@ -178,7 +200,7 @@ const records = {
   name:"MV Atlantic Voyager",
   type:"Passenger Vessel",
   calls:[
-    {date:"2026-08-09", eta:"07:50", arrival:"08:02", departure:"17:34", berth:"Berth 1", previous:"Vice City", next:"San Fierro",
+    {date:"2026-08-09", eta:"07:50", arrival:"08:02", departure:"17:34", berth:"Berth 1", previous:"Vice City", next:"WITHHELD — ROUTE AMENDED",
      people:"1,311 passengers / 488 crew",
      cargo:"Routine passenger provisions and vessel stores. No unusual declared commercial cargo recorded.",
      note:"PRE-ARRIVAL FEDERAL BOARDING RECORDED. Harbor Control log reflects a joint U.S. Marshals Service / FIB boarding operation conducted prior to docking. One protected individual was transferred under high-value protective status.",
@@ -191,7 +213,27 @@ const records = {
        ref:"USMS-FIB-0809-AV",
        persons:"1 high-value protected individual boarded",
        identity:"DERIC MATTHEWS",
-       remark:"ADDITIONAL INFORMATION CLASSIFIED. Protective status, originating case details, destination, and custody history are not available through Port Authority records. Contact the operating FIB field office or assigned U.S. Marshals Service liaison and reference USMS-FIB-0809-AV for further information."
+       remark:"ADDITIONAL INFORMATION CLASSIFIED. Protective status, originating case details, destination, and custody history are not available through Port Authority records.",
+       federalUrl:"https://fib-database.vercel.app/"
+     },
+     amendment:{
+       updated:"2026-08-15",
+       original:"San Fierro",
+       status:"ROUTE AMENDED",
+       destination:"WITHHELD",
+       authority:"Federal Movement Coordination",
+       reason:"Operational Security",
+       remark:"Subsequent destination and movement information is unavailable through Port Authority commercial records."
+     },
+     securityEvent:{
+       date:"2026-08-15",
+       status:"UNDER REVIEW",
+       summary:"An external session accessed this vessel record following publication of the route amendment.",
+       viewed:["Vessel Movement History","Route Amendment Record","Restricted Movement Annotation","Federal Coordination Reference USMS-FIB-0809-AV"],
+       requested:["Operating FIB Field Office","Protected Movement History","Transfer Authorization","Subsequent Destination"],
+       result:"DENIED / INCOMPLETE",
+       modified:"NONE",
+       remark:"Session information has been retained for security review. No attribution is established by this Port Authority record."
      }}
   ]
 },
@@ -253,6 +295,52 @@ function render(rec,mmsi){
           <span class="label">Persons:</span>${escapeHtml(c.movement.persons)}<br>
           <span class="label">Identity:</span>${escapeHtml(c.movement.identity)}<br><br>
           ${escapeHtml(c.movement.remark)}
+          ${c.movement.federalUrl ? `
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #564a2c">
+              <div class="meta-small">
+                <strong>ASSOCIATED FEDERAL REFERENCE:</strong> ${escapeHtml(c.movement.ref)}<br>
+                Detailed federal records are not maintained within the Port Authority system.
+                Authorized law-enforcement personnel may submit the reference through the originating agency's case-information portal.
+              </div>
+              <a class="external-link" href="${c.movement.federalUrl}" target="_blank" rel="noopener">OPEN FIB CASE INFORMATION SYSTEM</a>
+            </div>` : ""}
+        </div>
+      </div>`;
+    }
+
+    let amendment="";
+    if(c.amendment){
+      amendment=`
+      <div class="section">
+        <h2>Subsequent Voyage Update</h2>
+        <div class="notes restricted">
+          <strong>RECORD AMENDED — ${escapeHtml(c.amendment.updated)}</strong><br><br>
+          <span class="label">Original Destination:</span>${escapeHtml(c.amendment.original)}<br>
+          <span class="label">Voyage Status:</span>${escapeHtml(c.amendment.status)}<br>
+          <span class="label">Current Destination:</span>${escapeHtml(c.amendment.destination)}<br>
+          <span class="label">Amending Authority:</span>${escapeHtml(c.amendment.authority)}<br>
+          <span class="label">Reason:</span>${escapeHtml(c.amendment.reason)}<br><br>
+          ${escapeHtml(c.amendment.remark)}
+        </div>
+      </div>`;
+    }
+
+    let security="";
+    if(c.securityEvent){
+      security=`
+      <div class="section">
+        <h2>System Security Event</h2>
+        <div class="notes security">
+          <strong>EXTERNAL ACCESS EVENT — ${escapeHtml(c.securityEvent.status)}</strong><br><br>
+          <span class="label">Event Date:</span>${escapeHtml(c.securityEvent.date)}<br>
+          <span class="label">Access Result:</span>${escapeHtml(c.securityEvent.result)}<br>
+          <span class="label">Records Modified:</span>${escapeHtml(c.securityEvent.modified)}<br><br>
+          ${escapeHtml(c.securityEvent.summary)}<br><br>
+          <strong>Records Viewed</strong><br>
+          ${c.securityEvent.viewed.map(x=>`• ${escapeHtml(x)}`).join("<br>")}<br><br>
+          <strong>Unauthorized Linked-Record Requests</strong><br>
+          ${c.securityEvent.requested.map(x=>`• ${escapeHtml(x)}`).join("<br>")}<br><br>
+          ${escapeHtml(c.securityEvent.remark)}
         </div>
       </div>`;
     }
@@ -271,7 +359,7 @@ function render(rec,mmsi){
       </div>
       ${c.cargo ? `<div class="notes" style="margin-top:14px"><span class="label">Declared Stores / Cargo:</span>${escapeHtml(c.cargo)}</div>` : ""}
       <div class="notes ${c.restricted?'restricted':''}" style="margin-top:14px">${escapeHtml(c.note)}</div>
-    </div>${manifest}${movement}`;
+    </div>${manifest}${movement}${amendment}${security}`;
   }).join("");
 
   return `
