@@ -227,13 +227,15 @@ const records = {
      },
      securityEvent:{
        date:"2026-08-15",
-       status:"UNDER REVIEW",
-       summary:"An external session accessed this vessel record following publication of the route amendment.",
+       status:"SECURITY REVIEW PENDING",
+       ipn:"IPN-7C4A-19F2",
+       summary:"An unrecognized external session accessed this vessel record following publication of the subsequent movement amendment.",
        viewed:["Vessel Movement History","Route Amendment Record","Restricted Movement Annotation","Federal Coordination Reference USMS-FIB-0809-AV"],
-       requested:["Operating FIB Field Office","Protected Movement History","Transfer Authorization","Subsequent Destination"],
-       result:"DENIED / INCOMPLETE",
+       external:"Associated federal reference selected. User redirected to originating-agency records portal.",
+       auth:"REQUIRED",
+       federalAccess:"NOT AVAILABLE TO PORT AUTHORITY",
        modified:"NONE",
-       remark:"Session information has been retained for security review. No attribution is established by this Port Authority record."
+       remark:"Session retained in accordance with Port Authority system security policy."
      }}
   ]
 },
@@ -333,13 +335,15 @@ function render(rec,mmsi){
         <div class="notes security">
           <strong>EXTERNAL ACCESS EVENT — ${escapeHtml(c.securityEvent.status)}</strong><br><br>
           <span class="label">Event Date:</span>${escapeHtml(c.securityEvent.date)}<br>
-          <span class="label">Access Result:</span>${escapeHtml(c.securityEvent.result)}<br>
+          <span class="label">Source IPN:</span>${escapeHtml(c.securityEvent.ipn)}<br>
           <span class="label">Records Modified:</span>${escapeHtml(c.securityEvent.modified)}<br><br>
           ${escapeHtml(c.securityEvent.summary)}<br><br>
-          <strong>Records Viewed</strong><br>
-          ${c.securityEvent.viewed.map(x=>`• ${escapeHtml(x)}`).join("<br>")}<br><br>
-          <strong>Unauthorized Linked-Record Requests</strong><br>
-          ${c.securityEvent.requested.map(x=>`• ${escapeHtml(x)}`).join("<br>")}<br><br>
+          <strong>Port Authority Record Activity</strong><br>
+          ${c.securityEvent.viewed.map(x=>`• ${escapeHtml(x)} — VIEWED`).join("<br>")}<br><br>
+          <strong>External Record Activity</strong><br>
+          ${escapeHtml(c.securityEvent.external)}<br>
+          <span class="label">External Authentication:</span>${escapeHtml(c.securityEvent.auth)}<br>
+          <span class="label">Federal Record Access:</span>${escapeHtml(c.securityEvent.federalAccess)}<br><br>
           ${escapeHtml(c.securityEvent.remark)}
         </div>
       </div>`;
