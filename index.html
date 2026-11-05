@@ -138,9 +138,10 @@ button:hover{background:#2e506f}
   </div>
 
   <div class="update-banner">
-    <strong>AUTOMATED RECORD UPDATE</strong><br>
-    A vessel record previously accessed by a law-enforcement user has received a subsequent movement amendment.
-    <br><strong>MMSI:</strong> 248611920 &nbsp; • &nbsp; <strong>Update Type:</strong> Route / Federal Movement
+    <strong>SECURITY NOTICE — TARGETED RECORD ACCESS</strong><br>
+    Port Authority Cybersecurity has confirmed unauthorized access to a restricted vessel-movement record.
+    The affected record remains available to authorized investigators while the incident is reviewed.
+    <br><strong>MMSI:</strong> 248611920 &nbsp; • &nbsp; <strong>Incident:</strong> PA-CYB-0811-27
   </div>
 
   <div class="search">
@@ -200,7 +201,7 @@ const records = {
   name:"MV Atlantic Voyager",
   type:"Passenger Vessel",
   calls:[
-    {date:"2026-08-09", eta:"07:50", arrival:"08:02", departure:"17:34", berth:"Berth 1", previous:"Vice City", next:"WITHHELD — ROUTE AMENDED",
+    {date:"2026-08-09", eta:"07:50", arrival:"08:02", departure:"17:34", berth:"Berth 1", previous:"Vice City", next:"San Fierro",
      people:"1,311 passengers / 488 crew",
      cargo:"Routine passenger provisions and vessel stores. No unusual declared commercial cargo recorded.",
      note:"PRE-ARRIVAL FEDERAL BOARDING RECORDED. Harbor Control log reflects a joint U.S. Marshals Service / FIB boarding operation conducted prior to docking. One protected individual was transferred under high-value protective status.",
@@ -212,30 +213,23 @@ const records = {
        authority:"U.S. Marshals Service / Federal Bureau of Investigation",
        ref:"USMS-FIB-0809-AV",
        persons:"1 high-value protected individual boarded",
-       identity:"DERIC MATTHEWS",
-       remark:"ADDITIONAL INFORMATION CLASSIFIED. Protective status, originating case details, destination, and custody history are not available through Port Authority records.",
-       federalUrl:"https://jayla-knox-fib-database.vercel.app/"
-     },
-     amendment:{
-       updated:"2026-08-15",
-       original:"San Fierro",
-       status:"ROUTE AMENDED",
-       destination:"WITHHELD",
-       authority:"Federal Movement Coordination",
-       reason:"Operational Security",
-       remark:"Subsequent destination and movement information is unavailable through Port Authority commercial records."
+       identity:"NOT RETAINED — FEDERAL RECORD",
+       remark:"ADDITIONAL INFORMATION RESTRICTED. The protected person's identity, originating case, custody history, cabin assignment, escort identities, and final protective destination are not maintained in the Port Authority system."
      },
      securityEvent:{
-       date:"2026-08-15",
-       status:"SECURITY REVIEW PENDING",
+       date:"2026-08-11",
+       status:"CONFIRMED DATA BREACH",
        ipn:"IPN-7C4A-19F2",
-       summary:"An unrecognized external session accessed this vessel record following publication of the subsequent movement amendment.",
-       viewed:["Vessel Movement History","Route Amendment Record","Restricted Movement Annotation","Federal Coordination Reference USMS-FIB-0809-AV"],
-       external:"Associated federal reference selected. User redirected to originating-agency records portal.",
-       auth:"REQUIRED",
-       federalAccess:"NOT AVAILABLE TO PORT AUTHORITY",
+       summary:"An unauthorized external session used federal coordination reference USMS-FIB-0809-AV to locate and access this vessel record. The operator possessed the reference before entering the Port Authority system.",
+       queries:["USMS-FIB-0809-AV","ATLANTIC VOYAGER","08/09","PROTECTED TRANSFER","PASSENGER MANIFEST","ROUTING AMENDMENT","BOARDING SECURITY"],
+       viewed:["Vessel Movement History","Restricted Movement Annotation","Partial Passenger Manifest Index","Federal Coordination Reference USMS-FIB-0809-AV"],
+       attempted:["Protected Passenger Identity","Final Protective Destination","USMS Escort Identities","Cabin Assignment","Complete Boarding-Security Packet"],
+       external:"No originating-agency database access was available through this system.",
+       auth:"BYPASSED — METHOD UNDER REVIEW",
+       federalAccess:"NONE CONFIRMED",
+       exportStatus:"One partial manifest index may have been exported. No complete passenger manifest was exposed.",
        modified:"NONE",
-       remark:"Session retained in accordance with Port Authority system security policy."
+       remark:"Attribution remains unresolved. This record was searched by exact federal reference rather than discovered through ordinary vessel browsing. Session artifacts have been preserved for law-enforcement comparison."
      }}
   ]
 },
@@ -297,15 +291,6 @@ function render(rec,mmsi){
           <span class="label">Persons:</span>${escapeHtml(c.movement.persons)}<br>
           <span class="label">Identity:</span>${escapeHtml(c.movement.identity)}<br><br>
           ${escapeHtml(c.movement.remark)}
-          ${c.movement.federalUrl ? `
-            <div style="margin-top:16px;padding-top:14px;border-top:1px solid #564a2c">
-              <div class="meta-small">
-                <strong>ASSOCIATED FEDERAL REFERENCE:</strong> ${escapeHtml(c.movement.ref)}<br>
-                Detailed federal records are not maintained within the Port Authority system.
-                Authorized law-enforcement personnel may submit the reference through the originating agency's case-information portal.
-              </div>
-              <a class="external-link" href="${c.movement.federalUrl}" target="_blank" rel="noopener">OPEN FIB CASE INFORMATION SYSTEM</a>
-            </div>` : ""}
         </div>
       </div>`;
     }
@@ -338,8 +323,14 @@ function render(rec,mmsi){
           <span class="label">Source IPN:</span>${escapeHtml(c.securityEvent.ipn)}<br>
           <span class="label">Records Modified:</span>${escapeHtml(c.securityEvent.modified)}<br><br>
           ${escapeHtml(c.securityEvent.summary)}<br><br>
+          <strong>Recovered Search Sequence</strong><br>
+          ${c.securityEvent.queries.map(x=>`• ${escapeHtml(x)}`).join("<br>")}<br><br>
           <strong>Port Authority Record Activity</strong><br>
           ${c.securityEvent.viewed.map(x=>`• ${escapeHtml(x)} — VIEWED`).join("<br>")}<br><br>
+          <strong>Restricted Requests Denied</strong><br>
+          ${c.securityEvent.attempted.map(x=>`• ${escapeHtml(x)} — NOT AVAILABLE`).join("<br>")}<br><br>
+          <strong>Potential Export</strong><br>
+          ${escapeHtml(c.securityEvent.exportStatus)}<br><br>
           <strong>External Record Activity</strong><br>
           ${escapeHtml(c.securityEvent.external)}<br>
           <span class="label">External Authentication:</span>${escapeHtml(c.securityEvent.auth)}<br>
